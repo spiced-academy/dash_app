@@ -69,6 +69,7 @@ graph3 = dcc.Graph(figure=fig3)
 
 # using the app with radio item
 app =dash.Dash(external_stylesheets=[dbc.themes.DARKLY])
+server = app.server
 
 radio= dcc.RadioItems(id="countries",options=['Germany', 'Belgium', 'Denmark'], value="Germany", 
                       inline=True, style ={'paddingLeft': '30px'})
