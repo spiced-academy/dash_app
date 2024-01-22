@@ -1,18 +1,43 @@
 # Importing the libraries
-
-import pandas as pd 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+import pandas as pd
 import dash
 from dash import Dash, dcc, html, callback
 from dash.dependencies import Input, Output, State
 import plotly.express as px
 from dash import dash_table
 import dash_bootstrap_components as dbc
+from sqlalchemy import create_engine
+from sqlalchemy import text
 
-# reading the data and preparing it for the tables and graphs
-df = px.data.gapminder()
-df_germany = df[df['country']=='Germany']
-df_germany = df_germany[['year', 'lifeExp', 'pop', 'gdpPercap']]
-df_countries =df[df['country'].isin(['Germany', 'Belgium', 'Denmark'])]
+#credentials
+username = os.getenv('USER_SQL')
+password = os.getenv('PASS')
+host = os.getenv('HOST_SQL')
+port = os.getenv('PORT_SQL')
+
+#creating the engine
+url = f'postgresql://{username}:{password}@{host}:{port}/gapminder'
+engine = create_engine(url, echo=False)
+
+#getting the data
+with engine.begin() as conn: # Done with echo=False
+    result = conn.execute(text("SELECT * FROM df_germany;"))
+    data = result.all()
+
+df_germany = pd.DataFrame(data)
+df_germany=df_germany.set_index('index')
+
+
+with engine.begin() as conn: # Done with echo=False
+    result = conn.execute(text("SELECT * FROM df_countries;"))
+    data2 = result.all()
+
+
+df_countries =pd.DataFrame(data2 )
+df_countries=df_countries.set_index('index')
 
 # creating the table
 table = dash_table.DataTable(df_germany.to_dict('records'),
@@ -45,14 +70,12 @@ fig = fig.update_layout(
 
 graph = dcc.Graph(figure=fig)
 
-
 #creating the line graph
 fig2 = px.line(df_germany, x='year', y='lifeExp', height=300, title="Life Expectancy in Germany", markers=True)
 fig2 = fig2.update_layout(
         plot_bgcolor="#222222", paper_bgcolor="#222222", font_color="white"
     )
 graph2 = dcc.Graph(figure=fig2)
-
 
 #creating the map
 fig3 = px.choropleth(df_countries, locations='iso_alpha', 
@@ -65,6 +88,7 @@ fig3 = fig3.update_layout(
         plot_bgcolor="#222222", paper_bgcolor="#222222", font_color="white", geo_bgcolor="#222222"
     )
 graph3 = dcc.Graph(figure=fig3)
+
 
 
 # using the app with radio item
@@ -83,7 +107,6 @@ app.layout = html.Div([html.H1('Gap Minder Analysis of Germany', style={'textAli
                                                  'width': '900px', 'marginLeft': 'auto', 'marginRight': 'auto'}),
                                  table, radio, graph,  graph2, graph3])
                       ])
-
 
 @callback(
     Output(graph, "figure"), 
@@ -104,9 +127,10 @@ def update_bar_chart(country):
         plot_bgcolor="#222222", paper_bgcolor="#222222", font_color="white"
     )
 
-    return fig 
-
-
+    return fig
 
 if __name__ == "__main__":
-    app.run_server()
+    app.run_server(port=8080)
+
+
+
