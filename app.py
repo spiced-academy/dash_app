@@ -1,7 +1,5 @@
 # Importing the libraries
-import os
-from dotenv import load_dotenv
-load_dotenv()
+
 import pandas as pd
 import dash
 from dash import Dash, dcc, html, callback
@@ -9,35 +7,47 @@ from dash.dependencies import Input, Output, State
 import plotly.express as px
 from dash import dash_table
 import dash_bootstrap_components as dbc
-from sqlalchemy import create_engine
-from sqlalchemy import text
+
+#If you would like to connect the data from a database
+#USING SQLACHEMY TO CONNECT TO THE DATABASE
+#import os
+#from sqlalchemy import create_engine
+#from sqlalchemy import text
+#from dotenv import load_dotenv
+#load_dotenv()
 
 #credentials
-username = os.getenv('USER_SQL')
-password = os.getenv('PASS')
-host = os.getenv('HOST_SQL')
-port = os.getenv('PORT_SQL')
+#username = os.getenv('USER_SQL')
+#password = os.getenv('PASS')
+#host = os.getenv('HOST_SQL')
+#port = os.getenv('PORT_SQL')
 
 #creating the engine
-url = f'postgresql://{username}:{password}@{host}:{port}/gapminder'
-engine = create_engine(url, echo=False)
+#url = f'postgresql://{username}:{password}@{host}:{port}/gapminder'
+#engine = create_engine(url, echo=False)
 
 #getting the data
-with engine.begin() as conn: # Done with echo=False
-    result = conn.execute(text("SELECT * FROM df_germany;"))
-    data = result.all()
+#with engine.begin() as conn: # Done with echo=False
+#    result = conn.execute(text("SELECT * FROM df_germany;"))
+#    data = result.all()
 
-df_germany = pd.DataFrame(data)
-df_germany=df_germany.set_index('index')
+#df_germany = pd.DataFrame(data)
+#df_germany=df_germany.set_index('index')
+
+#with engine.begin() as conn: # Done with echo=False
+    #result = conn.execute(text("SELECT * FROM df_countries;"))
+    #data2 = result.all()
 
 
-with engine.begin() as conn: # Done with echo=False
-    result = conn.execute(text("SELECT * FROM df_countries;"))
-    data2 = result.all()
+#df_countries =pd.DataFrame(data2 )
+#df_countries=df_countries.set_index('index')
 
+#AND YOU NEED TO SEND QUERIES FOR EACH AND SAVE EACH DATAFRAME
 
-df_countries =pd.DataFrame(data2 )
-df_countries=df_countries.set_index('index')
+df = px.data.gapminder()
+df_germany = df[df['country']=='Germany']
+df_germany = df_germany[['year', 'lifeExp', 'pop', 'gdpPercap']]
+df_countries =df[df['country'].isin(['Germany', 'Belgium', 'Denmark'])]
 
 # creating the table
 table = dash_table.DataTable(df_germany.to_dict('records'),
@@ -93,6 +103,8 @@ graph3 = dcc.Graph(figure=fig3)
 
 # using the app with radio item
 app =dash.Dash(external_stylesheets=[dbc.themes.DARKLY])
+
+#DO NOT FORGET TO ADD SERVER=APP.SERVER
 server = app.server
 
 radio= dcc.RadioItems(id="countries",options=['Germany', 'Belgium', 'Denmark'], value="Germany", 
